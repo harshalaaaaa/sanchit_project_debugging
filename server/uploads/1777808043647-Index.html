@@ -1,0 +1,1755 @@
+I'll provide just the code for the community clothing exchange website with all the requested features.
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ThreadCycle | Community Clothing Exchange</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e5f74 0%, #3a6073 100%);
+        }
+        .btn-primary {
+            background-color: #1e5f74;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-color: #16475a;
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background-color: #f8f9fa;
+            color: #1e5f74;
+            border: 1px solid #1e5f74;
+            transition: all 0.3s ease;
+        }
+        .btn-secondary:hover {
+            background-color: #e9ecef;
+            transform: translateY(-2px);
+        }
+        .card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .tab-active {
+            color: #1e5f74;
+            border-bottom: 2px solid #1e5f74;
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // App state
+            const appState = {
+                currentPage: 'landing',
+                isLoggedIn: false,
+                isAdmin: false,
+                currentUser: null,
+                selectedItem: null,
+                items: [
+                    {
+                        id: 1,
+                        title: "Vintage Denim Jacket",
+                        description: "Classic vintage denim jacket in excellent condition. Size M, slightly oversized fit.",
+                        category: "Outerwear",
+                        type: "Jacket",
+                        size: "M",
+                        condition: "Excellent",
+                        tags: ["vintage", "denim", "casual"],
+                        images: ["jacket1", "jacket2"],
+                        uploader: {
+                            id: 2,
+                            name: "Emma Wilson",
+                            rating: 4.8,
+                            points: 350
+                        },
+                        status: "available"
+                    },
+                    {
+                        id: 2,
+                        title: "Cotton Summer Dress",
+                        description: "Light cotton summer dress with floral pattern. Perfect for warm days.",
+                        category: "Dresses",
+                        type: "Summer Dress",
+                        size: "S",
+                        condition: "Like New",
+                        tags: ["summer", "floral", "casual"],
+                        images: ["dress1", "dress2"],
+                        uploader: {
+                            id: 3,
+                            name: "Sophia Chen",
+                            rating: 4.9,
+                            points: 420
+                        },
+                        status: "available"
+                    },
+                    {
+                        id: 3,
+                        title: "Men's Wool Sweater",
+                        description: "Warm wool sweater in navy blue. Perfect for fall and winter.",
+                        category: "Tops",
+                        type: "Sweater",
+                        size: "L",
+                        condition: "Good",
+                        tags: ["wool", "winter", "warm"],
+                        images: ["sweater1", "sweater2"],
+                        uploader: {
+                            id: 4,
+                            name: "James Miller",
+                            rating: 4.7,
+                            points: 280
+                        },
+                        status: "available"
+                    },
+                    {
+                        id: 4,
+                        title: "Leather Ankle Boots",
+                        description: "Black leather ankle boots with minimal wear. Size 39 EU.",
+                        category: "Footwear",
+                        type: "Boots",
+                        size: "39 EU",
+                        condition: "Very Good",
+                        tags: ["leather", "boots", "autumn"],
+                        images: ["boots1", "boots2"],
+                        uploader: {
+                            id: 5,
+                            name: "Olivia Taylor",
+                            rating: 4.6,
+                            points: 310
+                        },
+                        status: "available"
+                    }
+                ],
+                users: [
+                    {
+                        id: 1,
+                        name: "Admin User",
+                        email: "admin@threadcycle.com",
+                        password: "admin123",
+                        isAdmin: true,
+                        points: 1000,
+                        items: [],
+                        swaps: []
+                    },
+                    {
+                        id: 2,
+                        name: "Emma Wilson",
+                        email: "emma@example.com",
+                        password: "password123",
+                        isAdmin: false,
+                        points: 350,
+                        items: [1],
+                        swaps: []
+                    }
+                ],
+                pendingItems: [
+                    {
+                        id: 5,
+                        title: "Silk Scarf",
+                        description: "Elegant silk scarf with geometric pattern.",
+                        category: "Accessories",
+                        type: "Scarf",
+                        size: "One Size",
+                        condition: "Excellent",
+                        tags: ["silk", "accessory", "elegant"],
+                        images: ["scarf1", "scarf2"],
+                        uploader: {
+                            id: 2,
+                            name: "Emma Wilson",
+                            rating: 4.8,
+                            points: 350
+                        },
+                        status: "pending"
+                    }
+                ]
+            };
+
+            // SVG placeholders for images
+            const svgImages = {
+                jacket1: `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><rect width="200" height="200" fill="#3a6073"/><path d="M100,50 L70,70 L70,150 L130,150 L130,70 L100,50 Z" fill="#1e5f74"/><path d="M70,70 L50,60 L50,140 L70,150 Z" fill="#16475a"/><path d="M130,70 L150,60 L150,140 L130,150 Z" fill="#16475a"/></svg>`,
+                jacket2: `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><rect width="200" height="200" fill="#3a6073"/><path d="M100,50 L70,70 L70,150 L130,150 L130,70 L100,50 Z" fill="#1e5f74"/><path d="M85,90 L115,90" stroke="#fff" stroke-width="2"/><path d="M85,100 L115,100" stroke="#fff" stroke-width="2"/><path d="M85,110 L115,110" stroke="#fff" stroke-width="2"/></svg>`,
+                dress1: `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><rect width="200" height="200" fill="#f8d7da"/><path d="M100,40 L80,60 L70,150 L130,150 L120,60 L100,40 Z" fill="#f5c6cb"/><path d="M85,70 C85,70 90,80 100,80 C110,80 115,70 115,70" stroke="#721c24" stroke-width="2" fill="none"/><circle cx="90" cy="100" r="3" fill="#721c24"/><circle cx="110" cy="100" r="3" fill="#721c24"/><circle cx="95" cy="120" r="3" fill="#721c24"/><circle cx="105" cy="120" r="3" fill="#721c24"/></svg>`,
+                dress2: `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><rect width="200" height="200" fill="#f8d7da"/><path d="M100,40 L80,60 L70,150 L130,150 L120,60 L100,40 Z" fill="#f5c6cb"/><path d="M80,90 L120,90" stroke="#721c24" stroke-width="1"/><path d="M75,120 L125,120" stroke="#721c24" stroke-width="1"/></svg>`,
+                sweater1: `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><rect width="200" height="200" fill="#cfe2ff"/><path d="M100,50 L70,70 L70,150 L130,150 L130,70 L100,50 Z" fill="#0d6efd"/><path d="M85,90 L115,90" stroke="#cfe2ff" stroke-width="3"/><path d="M85,100 L115,100" stroke="#cfe2ff" stroke-width="3"/><path d="M85,110 L115,110" stroke="#cfe2ff" stroke-width="3"/></svg>`,
+                sweater2: `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><rect width="200" height="200" fill="#cfe2ff"/><path d="M100,50 L70,70 L70,150 L130,150 L130,70 L100,50 Z" fill="#0d6efd"/><path d="M70,70 L50,60 L50,140 L70,150 Z" fill="#0a58ca"/><path d="M130,70 L150,60 L150,140 L130,150 Z" fill="#0a58ca"/></svg>`,
+                boots1: `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><rect width="200" height="200" fill="#e9ecef"/><path d="M60,100 L60,150 L140,150 L140,100 L120,80 L80,80 L60,100 Z" fill="#212529"/><path d="M70,100 L130,100" stroke="#495057" stroke-width="2"/><path d="M70,110 L130,110" stroke="#495057" stroke-width="2"/><circle cx="120" cy="90" r="5" fill="#495057"/></svg>`,
+                boots2: `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><rect width="200" height="200" fill="#e9ecef"/><path d="M50,120 L50,150 L150,150 L150,120 L130,100 L70,100 L50,120 Z" fill="#212529"/><path d="M60,120 L140,120" stroke="#495057" stroke-width="2"/><path d="M60,130 L140,130" stroke="#495057" stroke-width="2"/><circle cx="130" cy="110" r="5" fill="#495057"/></svg>`,
+                scarf1: `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><rect width="200" height="200" fill="#f8f9fa"/><path d="M40,70 C40,70 70,50 100,70 C130,90 160,70 160,70 L160,130 C160,130 130,150 100,130 C70,110 40,130 40,130 Z" fill="#dc3545"/><path d="M60,80 L140,120" stroke="#f8f9fa" stroke-width="2"/><path d="M60,100 L140,100" stroke="#f8f9fa" stroke-width="2"/><path d="M60,120 L140,80" stroke="#f8f9fa" stroke-width="2"/></svg>`,
+                scarf2: `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><rect width="200" height="200" fill="#f8f9fa"/><path d="M50,50 C50,50 80,70 100,50 C120,30 150,50 150,50 L150,150 C150,150 120,130 100,150 C80,170 50,150 50,150 Z" fill="#dc3545"/><path d="M70,70 L130,130" stroke="#f8f9fa" stroke-width="2"/><path d="M70,100 L130,100" stroke="#f8f9fa" stroke-width="2"/><path d="M70,130 L130,70" stroke="#f8f9fa" stroke-width="2"/></svg>`,
+                userAvatar: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="50" fill="#1e5f74"/><circle cx="50" cy="40" r="15" fill="#f8f9fa"/><path d="M25,85 C25,65 75,65 75,85" fill="#f8f9fa"/></svg>`
+            };
+
+            // Navigation functions
+            function navigateTo(page, params = {}) {
+                appState.currentPage = page;
+                if (params.itemId) {
+                    appState.selectedItem = appState.items.find(item => item.id === params.itemId);
+                }
+                renderApp();
+            }
+
+            // Authentication functions
+            function login(email, password) {
+                const user = appState.users.find(u => u.email === email && u.password === password);
+                if (user) {
+                    appState.isLoggedIn = true;
+                    appState.currentUser = user;
+                    appState.isAdmin = user.isAdmin;
+                    navigateTo('dashboard');
+                    return true;
+                }
+                return false;
+            }
+
+            function signup(name, email, password) {
+                if (appState.users.some(u => u.email === email)) {
+                    return false;
+                }
+                
+                const newUser = {
+                    id: appState.users.length + 1,
+                    name,
+                    email,
+                    password,
+                    isAdmin: false,
+                    points: 100,
+                    items: [],
+                    swaps: []
+                };
+                
+                appState.users.push(newUser);
+                appState.isLoggedIn = true;
+                appState.currentUser = newUser;
+                navigateTo('dashboard');
+                return true;
+            }
+
+            function logout() {
+                appState.isLoggedIn = false;
+                appState.currentUser = null;
+                appState.isAdmin = false;
+                navigateTo('landing');
+            }
+
+            // Item functions
+            function addItem(item) {
+                const newItem = {
+                    ...item,
+                    id: appState.items.length + appState.pendingItems.length + 1,
+                    uploader: {
+                        id: appState.currentUser.id,
+                        name: appState.currentUser.name,
+                        rating: 4.5,
+                        points: appState.currentUser.points
+                    },
+                    status: appState.isAdmin ? 'available' : 'pending'
+                };
+                
+                if (appState.isAdmin) {
+                    appState.items.push(newItem);
+                    appState.currentUser.items.push(newItem.id);
+                } else {
+                    appState.pendingItems.push(newItem);
+                }
+                
+                navigateTo('dashboard');
+            }
+
+            function approveItem(itemId) {
+                const itemIndex = appState.pendingItems.findIndex(item => item.id === itemId);
+                if (itemIndex !== -1) {
+                    const item = appState.pendingItems[itemIndex];
+                    item.status = 'available';
+                    appState.items.push(item);
+                    appState.pendingItems.splice(itemIndex, 1);
+                    
+                    const uploader = appState.users.find(u => u.id === item.uploader.id);
+                    if (uploader) {
+                        uploader.items.push(item.id);
+                    }
+                }
+                renderApp();
+            }
+
+            function rejectItem(itemId) {
+                const itemIndex = appState.pendingItems.findIndex(item => item.id === itemId);
+                if (itemIndex !== -1) {
+                    appState.pendingItems.splice(itemIndex, 1);
+                }
+                renderApp();
+            }
+
+            function requestSwap(itemId) {
+                alert('Swap request sent! The owner will be notified.');
+                navigateTo('dashboard');
+            }
+
+            function redeemWithPoints(itemId) {
+                const item = appState.items.find(i => i.id === itemId);
+                if (item && appState.currentUser.points >= 100) {
+                    appState.currentUser.points -= 100;
+                    alert('Item redeemed successfully! The owner will ship it to you.');
+                    navigateTo('dashboard');
+                } else {
+                    alert('Not enough points to redeem this item.');
+                }
+            }
+
+            // Render functions
+            function renderApp() {
+                const appContainer = document.getElementById('app');
+                appContainer.innerHTML = '';
+                
+                // Render navbar
+                appContainer.appendChild(renderNavbar());
+                
+                // Render current page
+                switch (appState.currentPage) {
+                    case 'landing':
+                        appContainer.appendChild(renderLandingPage());
+                        break;
+                    case 'login':
+                        appContainer.appendChild(renderLoginPage());
+                        break;
+                    case 'signup':
+                        appContainer.appendChild(renderSignupPage());
+                        break;
+                    case 'dashboard':
+                        appContainer.appendChild(renderDashboard());
+                        break;
+                    case 'browse':
+                        appContainer.appendChild(renderBrowsePage());
+                        break;
+                    case 'item-detail':
+                        appContainer.appendChild(renderItemDetailPage());
+                        break;
+                    case 'add-item':
+                        appContainer.appendChild(renderAddItemPage());
+                        break;
+                    case 'admin':
+                        appContainer.appendChild(renderAdminPage());
+                        break;
+                    default:
+                        appContainer.appendChild(renderLandingPage());
+                }
+            }
+
+            function renderNavbar() {
+                const navbar = document.createElement('nav');
+                navbar.className = 'bg-white shadow-md py-4 px-6 flex justify-between items-center';
+                
+                const logoSection = document.createElement('div');
+                logoSection.className = 'flex items-center space-x-2';
+                
+                const logo = document.createElement('div');
+                logo.className = 'text-2xl font-bold text-teal-700 cursor-pointer';
+                logo.textContent = 'ThreadCycle';
+                logo.addEventListener('click', () => navigateTo('landing'));
+                
+                logoSection.appendChild(logo);
+                
+                const navLinks = document.createElement('div');
+                navLinks.className = 'flex items-center space-x-6';
+                
+                if (appState.isLoggedIn) {
+                    const browseLink = document.createElement('a');
+                    browseLink.className = 'text-gray-600 hover:text-teal-700 cursor-pointer';
+                    browseLink.textContent = 'Browse';
+                    browseLink.addEventListener('click', () => navigateTo('browse'));
+                    
+                    const addItemLink = document.createElement('a');
+                    addItemLink.className = 'text-gray-600 hover:text-teal-700 cursor-pointer';
+                    addItemLink.textContent = 'Add Item';
+                    addItemLink.addEventListener('click', () => navigateTo('add-item'));
+                    
+                    const dashboardLink = document.createElement('a');
+                    dashboardLink.className = 'text-gray-600 hover:text-teal-700 cursor-pointer';
+                    dashboardLink.textContent = 'Dashboard';
+                    dashboardLink.addEventListener('click', () => navigateTo('dashboard'));
+                    
+                    if (appState.isAdmin) {
+                        const adminLink = document.createElement('a');
+                        adminLink.className = 'text-gray-600 hover:text-teal-700 cursor-pointer';
+                        adminLink.textContent = 'Admin';
+                        adminLink.addEventListener('click', () => navigateTo('admin'));
+                        navLinks.appendChild(adminLink);
+                    }
+                    
+                    const userSection = document.createElement('div');
+                    userSection.className = 'flex items-center space-x-2 ml-6';
+                    
+                    const userAvatar = document.createElement('div');
+                    userAvatar.className = 'w-8 h-8 rounded-full overflow-hidden';
+                    userAvatar.innerHTML = svgImages.userAvatar;
+                    
+                    const userName = document.createElement('span');
+                    userName.className = 'text-gray-700';
+                    userName.textContent = appState.currentUser.name;
+                    
+                    const pointsBadge = document.createElement('span');
+                    pointsBadge.className = 'bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded-full';
+                    pointsBadge.textContent = `${appState.currentUser.points} pts`;
+                    
+                    const logoutBtn = document.createElement('button');
+                    logoutBtn.className = 'ml-4 text-sm text-gray-500 hover:text-red-500';
+                    logoutBtn.textContent = 'Logout';
+                    logoutBtn.addEventListener('click', logout);
+                    
+                    userSection.appendChild(userAvatar);
+                    userSection.appendChild(userName);
+                    userSection.appendChild(pointsBadge);
+                    userSection.appendChild(logoutBtn);
+                    
+                    navLinks.appendChild(browseLink);
+                    navLinks.appendChild(addItemLink);
+                    navLinks.appendChild(dashboardLink);
+                    navLinks.appendChild(userSection);
+                } else {
+                    const loginBtn = document.createElement('button');
+                    loginBtn.className = 'px-4 py-2 rounded-md bg-white text-teal-700 border border-teal-700 hover:bg-teal-50';
+                    loginBtn.textContent = 'Login';
+                    loginBtn.addEventListener('click', () => navigateTo('login'));
+                    
+                    const signupBtn = document.createElement('button');
+                    signupBtn.className = 'px-4 py-2 rounded-md bg-teal-700 text-white hover:bg-teal-800';
+                    signupBtn.textContent = 'Sign Up';
+                    signupBtn.addEventListener('click', () => navigateTo('signup'));
+                    
+                    navLinks.appendChild(loginBtn);
+                    navLinks.appendChild(signupBtn);
+                }
+                
+                navbar.appendChild(logoSection);
+                navbar.appendChild(navLinks);
+                
+                return navbar;
+            }
+
+            function renderLandingPage() {
+                const landingPage = document.createElement('div');
+                landingPage.className = 'flex flex-col min-h-screen';
+                
+                // Hero section
+                const heroSection = document.createElement('div');
+                heroSection.className = 'gradient-bg text-white py-20 px-6 md:px-12 lg:px-24';
+                
+                const heroContent = document.createElement('div');
+                heroContent.className = 'max-w-6xl mx-auto flex flex-col md:flex-row items-center';
+                
+                const heroText = document.createElement('div');
+                heroText.className = 'md:w-1/2 mb-10 md:mb-0';
+                
+                const heroTitle = document.createElement('h1');
+                heroTitle.className = 'text-4xl md:text-5xl font-bold mb-6';
+                heroTitle.textContent = 'Swap, Share, Sustain';
+                
+                const heroSubtitle = document.createElement('p');
+                heroSubtitle.className = 'text-xl mb-8 opacity-90';
+                heroSubtitle.textContent = 'Join our community clothing exchange platform and give your wardrobe a sustainable refresh.';
+                
+                const ctaButtons = document.createElement('div');
+                ctaButtons.className = 'flex flex-wrap gap-4';
+                
+                const browseBtn = document.createElement('button');
+                browseBtn.className = 'px-6 py-3 rounded-md bg-white text-teal-700 font-medium hover:bg-gray-100 transition-all';
+                browseBtn.textContent = 'Browse Items';
+                browseBtn.addEventListener('click', () => navigateTo('browse'));
+                
+                const startSwappingBtn = document.createElement('button');
+                startSwappingBtn.className = 'px-6 py-3 rounded-md bg-teal-600 text-white font-medium hover:bg-teal-700 transition-all';
+                startSwappingBtn.textContent = 'Start Swapping';
+                startSwappingBtn.addEventListener('click', () => {
+                    if (appState.isLoggedIn) {
+                        navigateTo('add-item');
+                    } else {
+                        navigateTo('signup');
+                    }
+                });
+                
+                ctaButtons.appendChild(browseBtn);
+                ctaButtons.appendChild(startSwappingBtn);
+                
+                heroText.appendChild(heroTitle);
+                heroText.appendChild(heroSubtitle);
+                heroText.appendChild(ctaButtons);
+                
+                const heroImage = document.createElement('div');
+                heroImage.className = 'md:w-1/2 flex justify-center';
+                
+                const svgImage = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svgImage.setAttribute('width', '400');
+                svgImage.setAttribute('height', '300');
+                svgImage.setAttribute('viewBox', '0 0 400 300');
+                
+                // Create a simple illustration for the hero section
+                svgImage.innerHTML = `
+                    <rect width="400" height="300" fill="none" />
+                    <circle cx="200" cy="150" r="100" fill="#f8f9fa" opacity="0.2" />
+                    <path d="M150,100 L120,120 L120,200 L180,200 L180,120 L150,100 Z" fill="#f8f9fa" opacity="0.8" />
+                    <path d="M250,100 L220,120 L220,200 L280,200 L280,120 L250,100 Z" fill="#f8f9fa" opacity="0.6" />
+                    <path d="M200,50 L170,70 L170,150 L230,150 L230,70 L200,50 Z" fill="#f8f9fa" />
+                    <circle cx="200" cy="30" r="15" fill="#f8f9fa" />
+                    <path d="M185,30 A15,15 0 0,0 215,30" fill="none" stroke="#1e5f74" stroke-width="2" />
+                `;
+                
+                heroImage.appendChild(svgImage);
+                
+                heroContent.appendChild(heroText);
+                heroContent.appendChild(heroImage);
+                
+                heroSection.appendChild(heroContent);
+                
+                // Featured items section
+                const featuredSection = document.createElement('div');
+                featuredSection.className = 'py-16 px-6 md:px-12 lg:px-24 bg-white';
+                
+                const featuredContent = document.createElement('div');
+                featuredContent.className = 'max-w-6xl mx-auto';
+                
+                const featuredTitle = document.createElement('h2');
+                featuredTitle.className = 'text-3xl font-bold mb-2 text-gray-800';
+                featuredTitle.textContent = 'Featured Items';
+                
+                const featuredSubtitle = document.createElement('p');
+                featuredSubtitle.className = 'text-gray-600 mb-10';
+                featuredSubtitle.textContent = 'Discover unique pieces from our community';
+                
+                const carouselContainer = document.createElement('div');
+                carouselContainer.className = 'relative';
+                
+                const carousel = document.createElement('div');
+                carousel.className = 'carousel flex overflow-x-auto gap-6 pb-6 snap-x';
+                
+                // Add featured items to carousel
+                appState.items.forEach(item => {
+                    const itemCard = document.createElement('div');
+                    itemCard.className = 'card snap-start flex-shrink-0 w-64 bg-white rounded-lg overflow-hidden shadow-md';
+                    
+                    const itemImage = document.createElement('div');
+                    itemImage.className = 'h-48 bg-gray-200 overflow-hidden';
+                    itemImage.innerHTML = svgImages[item.images[0]];
+                    
+                    const itemContent = document.createElement('div');
+                    itemContent.className = 'p-4';
+                    
+                    const itemTitle = document.createElement('h3');
+                    itemTitle.className = 'font-medium text-gray-800 mb-1';
+                    itemTitle.textContent = item.title;
+                    
+                    const itemSize = document.createElement('span');
+                    itemSize.className = 'inline-block bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded mr-2';
+                    itemSize.textContent = `Size ${item.size}`;
+                    
+                    const itemCondition = document.createElement('span');
+                    itemCondition.className = 'inline-block bg-teal-100 text-teal-700 text-xs px-2 py-1 rounded';
+                    itemCondition.textContent = item.condition;
+                    
+                    const viewButton = document.createElement('button');
+                    viewButton.className = 'mt-3 w-full py-2 bg-teal-700 text-white rounded hover:bg-teal-800 transition-colors';
+                    viewButton.textContent = 'View Details';
+                    viewButton.addEventListener('click', () => navigateTo('item-detail', { itemId: item.id }));
+                    
+                    itemContent.appendChild(itemTitle);
+                    itemContent.appendChild(itemSize);
+                    itemContent.appendChild(itemCondition);
+                    itemContent.appendChild(viewButton);
+                    
+                    itemCard.appendChild(itemImage);
+                    itemCard.appendChild(itemContent);
+                    
+                    carousel.appendChild(itemCard);
+                });
+                
+                carouselContainer.appendChild(carousel);
+                
+                featuredContent.appendChild(featuredTitle);
+                featuredContent.appendChild(featuredSubtitle);
+                featuredContent.appendChild(carouselContainer);
+                
+                featuredSection.appendChild(featuredContent);
+                
+                // How it works section
+                const howItWorksSection = document.createElement('div');
+                howItWorksSection.className = 'py-16 px-6 md:px-12 lg:px-24 bg-gray-50';
+                
+                const howItWorksContent = document.createElement('div');
+                howItWorksContent.className = 'max-w-6xl mx-auto';
+                
+                const howItWorksTitle = document.createElement('h2');
+                howItWorksTitle.className = 'text-3xl font-bold mb-2 text-center text-gray-800';
+                howItWorksTitle.textContent = 'How It Works';
+                
+                const howItWorksSubtitle = document.createElement('p');
+                howItWorksSubtitle.className = 'text-gray-600 mb-12 text-center';
+                howItWorksSubtitle.textContent = 'Three simple steps to refresh your wardrobe sustainably';
+                
+                const stepsContainer = document.createElement('div');
+                stepsContainer.className = 'grid grid-cols-1 md:grid-cols-3 gap-8';
+                
+                const steps = [
+                    {
+                        title: 'List Your Items',
+                        description: 'Upload photos and details of clothing you no longer wear but is still in good condition.',
+                        icon: `<svg class="w-12 h-12 text-teal-700" fill="currentColor" viewBox="0 0 20 20"><path d="M5.5 13a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 13H11V9.413l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13H5.5z"></path><path d="M9 13h2v5a1 1 0 11-2 0v-5z"></path></svg>`
+                    },
+                    {
+                        title: 'Browse & Request',
+                        description: 'Find items you love and request to swap with your own clothes or redeem with points.',
+                        icon: `<svg class="w-12 h-12 text-teal-700" fill="currentColor" viewBox="0 0 20 20"><path d="M9 9a2 2 0 114 0 2 2 0 01-4 0z"></path><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a4 4 0 00-3.446 6.032l-2.261 2.26a1 1 0 101.414 1.415l2.261-2.261A4 4 0 1011 5z" clip-rule="evenodd"></path></svg>`
+                    },
+                    {
+                        title: 'Swap & Enjoy',
+                        description: 'Arrange the exchange and enjoy your new-to-you sustainable fashion items.',
+                        icon: `<svg class="w-12 h-12 text-teal-700" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a1 1 0 00-1 1v1.323l-3.954 1.582a1 1 0 00-.62.919V9a1 1 0 001 1h4.216l4.184 3.13a1 1 0 001.59-.603l2-6A1 1 0 0017 5h-5V3a1 1 0 00-1-1H10zm7.854 8.146a.5.5 0 010 .708l-6 6a.5.5 0 01-.708-.708l6-6a.5.5 0 01.708 0z" clip-rule="evenodd"></path><path fill-rule="evenodd" d="M4.5 5a.5.5 0 01.5.5v9a.5.5 0 01-1 0v-9a.5.5 0 01.5-.5z" clip-rule="evenodd"></path></svg>`
+                    }
+                ];
+                
+                steps.forEach(step => {
+                    const stepCard = document.createElement('div');
+                    stepCard.className = 'bg-white p-6 rounded-lg shadow-md text-center';
+                    
+                    const iconContainer = document.createElement('div');
+                    iconContainer.className = 'flex justify-center mb-4';
+                    iconContainer.innerHTML = step.icon;
+                    
+                    const stepTitle = document.createElement('h3');
+                    stepTitle.className = 'text-xl font-semibold mb-2 text-gray-800';
+                    stepTitle.textContent = step.title;
+                    
+                    const stepDescription = document.createElement('p');
+                    stepDescription.className = 'text-gray-600';
+                    stepDescription.textContent = step.description;
+                    
+                    stepCard.appendChild(iconContainer);
+                    stepCard.appendChild(stepTitle);
+                    stepCard.appendChild(stepDescription);
+                    
+                    stepsContainer.appendChild(stepCard);
+                });
+                
+                howItWorksContent.appendChild(howItWorksTitle);
+                howItWorksContent.appendChild(howItWorksSubtitle);
+                howItWorksContent.appendChild(stepsContainer);
+                
+                howItWorksSection.appendChild(howItWorksContent);
+                
+                // Join CTA section
+                const ctaSection = document.createElement('div');
+                ctaSection.className = 'py-16 px-6 md:px-12 lg:px-24 bg-teal-700 text-white text-center';
+                
+                const ctaContent = document.createElement('div');
+                ctaContent.className = 'max-w-3xl mx-auto';
+                
+                const ctaTitle = document.createElement('h2');
+                ctaTitle.className = 'text-3xl font-bold mb-4';
+                ctaTitle.textContent = 'Ready to Join Our Community?';
+                
+                const ctaText = document.createElement('p');
+                ctaText.className = 'text-lg mb-8 opacity-90';
+                ctaText.textContent = 'Sign up today and get 100 bonus points to start swapping!';
+                
+                const ctaButton = document.createElement('button');
+                ctaButton.className = 'px-8 py-3 bg-white text-teal-700 rounded-md font-medium hover:bg-gray-100 transition-all';
+                ctaButton.textContent = 'Join ThreadCycle';
+                ctaButton.addEventListener('click', () => navigateTo('signup'));
+                
+                ctaContent.appendChild(ctaTitle);
+                ctaContent.appendChild(ctaText);
+                ctaContent.appendChild(ctaButton);
+                
+                ctaSection.appendChild(ctaContent);
+                
+                // Footer
+                const footer = document.createElement('footer');
+                footer.className = 'bg-gray-800 text-gray-300 py-10 px-6';
+                
+                const footerContent = document.createElement('div');
+                footerContent.className = 'max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8';
+                
+                const footerAbout = document.createElement('div');
+                
+                const footerLogo = document.createElement('h3');
+                footerLogo.className = 'text-xl font-bold text-white mb-4';
+                footerLogo.textContent = 'ThreadCycle';
+                
+                const footerDescription = document.createElement('p');
+                footerDescription.className = 'mb-4 text-sm';
+                footerDescription.textContent = 'A community-driven platform for sustainable fashion through clothing exchange.';
+                
+                footerAbout.appendChild(footerLogo);
+                footerAbout.appendChild(footerDescription);
+                
+                const footerLinks = document.createElement('div');
+                
+                const linksTitle = document.createElement('h4');
+                linksTitle.className = 'text-white font-medium mb-4';
+                linksTitle.textContent = 'Quick Links';
+                
+                const linksList = document.createElement('ul');
+                linksList.className = 'space-y-2 text-sm';
+                
+                ['About Us', 'How It Works', 'Community Guidelines', 'Sustainability Impact'].forEach(link => {
+                    const li = document.createElement('li');
+                    const a = document.createElement('a');
+                    a.className = 'hover:text-white cursor-pointer';
+                    a.textContent = link;
+                    li.appendChild(a);
+                    linksList.appendChild(li);
+                });
+                
+                footerLinks.appendChild(linksTitle);
+                footerLinks.appendChild(linksList);
+                
+                const footerContact = document.createElement('div');
+                
+                const contactTitle = document.createElement('h4');
+                contactTitle.className = 'text-white font-medium mb-4';
+                contactTitle.textContent = 'Contact Us';
+                
+                const contactEmail = document.createElement('p');
+                contactEmail.className = 'text-sm mb-2';
+                contactEmail.textContent = 'hello@threadcycle.com';
+                
+                const socialLinks = document.createElement('div');
+                socialLinks.className = 'flex space-x-4 mt-4';
+                
+                ['Facebook', 'Twitter', 'Instagram'].forEach(platform => {
+                    const socialLink = document.createElement('a');
+                    socialLink.className = 'hover:text-white cursor-pointer text-sm';
+                    socialLink.textContent = platform;
+                    socialLinks.appendChild(socialLink);
+                });
+                
+                footerContact.appendChild(contactTitle);
+                footerContact.appendChild(contactEmail);
+                footerContact.appendChild(socialLinks);
+                
+                footerContent.appendChild(footerAbout);
+                footerContent.appendChild(footerLinks);
+                footerContent.appendChild(footerContact);
+                
+                const footerBottom = document.createElement('div');
+                footerBottom.className = 'max-w-6xl mx-auto pt-8 mt-8 border-t border-gray-700 text-sm text-center';
+                footerBottom.textContent = '© 2023 ThreadCycle. All rights reserved.';
+                
+                footer.appendChild(footerContent);
+                footer.appendChild(footerBottom);
+                
+                // Append all sections to landing page
+                landingPage.appendChild(heroSection);
+                landingPage.appendChild(featuredSection);
+                landingPage.appendChild(howItWorksSection);
+                landingPage.appendChild(ctaSection);
+                landingPage.appendChild(footer);
+                
+                return landingPage;
+            }
+
+            function renderLoginPage() {
+                const loginPage = document.createElement('div');
+                loginPage.className = 'min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center';
+                
+                const formContainer = document.createElement('div');
+                formContainer.className = 'max-w-md w-full bg-white rounded-lg shadow-lg overflow-hidden';
+                
+                const formHeader = document.createElement('div');
+                formHeader.className = 'gradient-bg px-6 py-8 text-center';
+                
+                const formTitle = document.createElement('h2');
+                formTitle.className = 'text-3xl font-bold text-white';
+                formTitle.textContent = 'Welcome Back';
+                
+                const formSubtitle = document.createElement('p');
+                formSubtitle.className = 'mt-2 text-white opacity-90';
+                formSubtitle.textContent = 'Sign in to continue to ThreadCycle';
+                
+                formHeader.appendChild(formTitle);
+                formHeader.appendChild(formSubtitle);
+                
+                const formBody = document.createElement('div');
+                formBody.className = 'px-6 py-8';
+                
+                const form = document.createElement('form');
+                form.className = 'space-y-6';
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const email = emailInput.value;
+                    const password = passwordInput.value;
+                    
+                    if (login(email, password)) {
+                        // Success handled in login function
+                    } else {
+                        errorMessage.textContent = 'Invalid email or password';
+                        errorMessage.style.display = 'block';
+                    }
+                });
+                
+                const emailGroup = document.createElement('div');
+                
+                const emailLabel = document.createElement('label');
+                emailLabel.className = 'block text-sm font-medium text-gray-700 mb-1';
+                emailLabel.textContent = 'Email';
+                emailLabel.setAttribute('for', 'email');
+                
+                const emailInput = document.createElement('input');
+                emailInput.className = 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500';
+                emailInput.type = 'email';
+                emailInput.id = 'email';
+                emailInput.placeholder = 'you@example.com';
+                emailInput.required = true;
+                
+                emailGroup.appendChild(emailLabel);
+                emailGroup.appendChild(emailInput);
+                
+                const passwordGroup = document.createElement('div');
+                
+                const passwordLabel = document.createElement('label');
+                passwordLabel.className = 'block text-sm font-medium text-gray-700 mb-1';
+                passwordLabel.textContent = 'Password';
+                passwordLabel.setAttribute('for', 'password');
+                
+                const passwordInput = document.createElement('input');
+                passwordInput.className = 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500';
+                passwordInput.type = 'password';
+                passwordInput.id = 'password';
+                passwordInput.placeholder = '••••••••';
+                passwordInput.required = true;
+                
+                passwordGroup.appendChild(passwordLabel);
+                passwordGroup.appendChild(passwordInput);
+                
+                const errorMessage = document.createElement('div');
+                errorMessage.className = 'text-red-500 text-sm';
+                errorMessage.style.display = 'none';
+                
+                const submitButton = document.createElement('button');
+                submitButton.className = 'w-full py-3 px-4 bg-teal-700 hover:bg-teal-800 text-white font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500';
+                submitButton.type = 'submit';
+                submitButton.textContent = 'Sign In';
+                
+                const demoLogin = document.createElement('div');
+                demoLogin.className = 'mt-4 text-center text-sm text-gray-600';
+                demoLogin.innerHTML = '<p>Demo credentials:</p><p>Admin: admin@threadcycle.com / admin123</p><p>User: emma@example.com / password123</p>';
+                
+                form.appendChild(emailGroup);
+                form.appendChild(passwordGroup);
+                form.appendChild(errorMessage);
+                form.appendChild(submitButton);
+                form.appendChild(demoLogin);
+                
+                const formFooter = document.createElement('div');
+                formFooter.className = 'mt-6 text-center';
+                
+                const signupLink = document.createElement('p');
+                signupLink.className = 'text-sm text-gray-600';
+                signupLink.innerHTML = 'Don\'t have an account? <a class="text-teal-700 hover:text-teal-800 font-medium cursor-pointer">Sign up</a>';
+                signupLink.querySelector('a').addEventListener('click', () => navigateTo('signup'));
+                
+                formFooter.appendChild(signupLink);
+                
+                formBody.appendChild(form);
+                formBody.appendChild(formFooter);
+                
+                formContainer.appendChild(formHeader);
+                formContainer.appendChild(formBody);
+                
+                loginPage.appendChild(formContainer);
+                
+                return loginPage;
+            }
+
+            function renderSignupPage() {
+                const signupPage = document.createElement('div');
+                signupPage.className = 'min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center';
+                
+                const formContainer = document.createElement('div');
+                formContainer.className = 'max-w-md w-full bg-white rounded-lg shadow-lg overflow-hidden';
+                
+                const formHeader = document.createElement('div');
+                formHeader.className = 'gradient-bg px-6 py-8 text-center';
+                
+                const formTitle = document.createElement('h2');
+                formTitle.className = 'text-3xl font-bold text-white';
+                formTitle.textContent = 'Join ThreadCycle';
+                
+                const formSubtitle = document.createElement('p');
+                formSubtitle.className = 'mt-2 text-white opacity-90';
+                formSubtitle.textContent = 'Create an account to start swapping';
+                
+                formHeader.appendChild(formTitle);
+                formHeader.appendChild(formSubtitle);
+                
+                const formBody = document.createElement('div');
+                formBody.className = 'px-6 py-8';
+                
+                const form = document.createElement('form');
+                form.className = 'space-y-6';
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const name = nameInput.value;
+                    const email = emailInput.value;
+                    const password = passwordInput.value;
+                    
+                    if (signup(name, email, password)) {
+                        // Success handled in signup function
+                    } else {
+                        errorMessage.textContent = 'Email already in use';
+                        errorMessage.style.display = 'block';
+                    }
+                });
+                
+                const nameGroup = document.createElement('div');
+                
+                const nameLabel = document.createElement('label');
+                nameLabel.className = 'block text-sm font-medium text-gray-700 mb-1';
+                nameLabel.textContent = 'Full Name';
+                nameLabel.setAttribute('for', 'name');
+                
+                const nameInput = document.createElement('input');
+                nameInput.className = 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500';
+                nameInput.type = 'text';
+                nameInput.id = 'name';
+                nameInput.placeholder = 'John Doe';
+                nameInput.required = true;
+                
+                nameGroup.appendChild(nameLabel);
+                nameGroup.appendChild(nameInput);
+                
+                const emailGroup = document.createElement('div');
+                
+                const emailLabel = document.createElement('label');
+                emailLabel.className = 'block text-sm font-medium text-gray-700 mb-1';
+                emailLabel.textContent = 'Email';
+                emailLabel.setAttribute('for', 'email');
+                
+                const emailInput = document.createElement('input');
+                emailInput.className = 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500';
+                emailInput.type = 'email';
+                emailInput.id = 'email';
+                emailInput.placeholder = 'you@example.com';
+                emailInput.required = true;
+                
+                emailGroup.appendChild(emailLabel);
+                emailGroup.appendChild(emailInput);
+                
+                const passwordGroup = document.createElement('div');
+                
+                const passwordLabel = document.createElement('label');
+                passwordLabel.className = 'block text-sm font-medium text-gray-700 mb-1';
+                passwordLabel.textContent = 'Password';
+                passwordLabel.setAttribute('for', 'password');
+                
+                const passwordInput = document.createElement('input');
+                passwordInput.className = 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500';
+                passwordInput.type = 'password';
+                passwordInput.id = 'password';
+                passwordInput.placeholder = '••••••••';
+                passwordInput.required = true;
+                
+                passwordGroup.appendChild(passwordLabel);
+                passwordGroup.appendChild(passwordInput);
+                
+                const errorMessage = document.createElement('div');
+                errorMessage.className = 'text-red-500 text-sm';
+                errorMessage.style.display = 'none';
+                
+                const submitButton = document.createElement('button');
+                submitButton.className = 'w-full py-3 px-4 bg-teal-700 hover:bg-teal-800 text-white font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500';
+                submitButton.type = 'submit';
+                submitButton.textContent = 'Create Account';
+                
+                const termsText = document.createElement('p');
+                termsText.className = 'mt-4 text-xs text-gray-500 text-center';
+                termsText.textContent = 'By signing up, you agree to our Terms of Service and Privacy Policy';
+                
+                form.appendChild(nameGroup);
+                form.appendChild(emailGroup);
+                form.appendChild(passwordGroup);
+                form.appendChild(errorMessage);
+                form.appendChild(submitButton);
+                form.appendChild(termsText);
+                
+                const formFooter = document.createElement('div');
+                formFooter.className = 'mt-6 text-center';
+                
+                const loginLink = document.createElement('p');
+                loginLink.className = 'text-sm text-gray-600';
+                loginLink.innerHTML = 'Already have an account? <a class="text-teal-700 hover:text-teal-800 font-medium cursor-pointer">Sign in</a>';
+                loginLink.querySelector('a').addEventListener('click', () => navigateTo('login'));
+                
+                formFooter.appendChild(loginLink);
+                
+                formBody.appendChild(form);
+                formBody.appendChild(formFooter);
+                
+                formContainer.appendChild(formHeader);
+                formContainer.appendChild(formBody);
+                
+                signupPage.appendChild(formContainer);
+                
+                return signupPage;
+            }
+
+            function renderDashboard() {
+                if (!appState.isLoggedIn) {
+                    navigateTo('login');
+                    return document.createElement('div');
+                }
+                
+                const dashboard = document.createElement('div');
+                dashboard.className = 'min-h-screen bg-gray-50 pb-12';
+                
+                const headerSection = document.createElement('div');
+                headerSection.className = 'gradient-bg text-white py-12 px-6';
+                
+                const headerContent = document.createElement('div');
+                headerContent.className = 'max-w-6xl mx-auto';
+                
+                const welcomeText = document.createElement('h1');
+                welcomeText.className = 'text-3xl font-bold mb-2';
+                welcomeText.textContent = `Welcome, ${appState.currentUser.name}!`;
+                
+                const statsContainer = document.createElement('div');
+                statsContainer.className = 'grid grid-cols-1 md:grid-cols-3 gap-6 mt-6';
+                
+                const stats = [
+                    {
+                        label: 'Points Balance',
+                        value: appState.currentUser.points,
+                        icon: `<svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path></svg>`
+                    },
+                    {
+                        label: 'Items Listed',
+                        value: appState.currentUser.items.length,
+                        icon: `<svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clip-rule="evenodd"></path></svg>`
+                    },
+                    {
+                        label: 'Completed Swaps',
+                        value: appState.currentUser.swaps.length,
+                        icon: `<svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20"><path d="M8 5a1 1 0 100 2h5.586l-1.293 1.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L13.586 5H8zM12 15a1 1 0 100-2H6.414l1.293-1.293a1 1 0 10-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L6.414 15H12z"></path></svg>`
+                    }
+                ];
+                
+                stats.forEach(stat => {
+                    const statCard = document.createElement('div');
+                    statCard.className = 'bg-white bg-opacity-20 p-4 rounded-lg flex items-center';
+                    
+                    const iconContainer = document.createElement('div');
+                    iconContainer.className = 'mr-4';
+                    iconContainer.innerHTML = stat.icon;
+                    
+                    const statInfo = document.createElement('div');
+                    
+                    const statValue = document.createElement('div');
+                    statValue.className = 'text-2xl font-bold';
+                    statValue.textContent = stat.value;
+                    
+                    const statLabel = document.createElement('div');
+                    statLabel.className = 'text-sm opacity-90';
+                    statLabel.textContent = stat.label;
+                    
+                    statInfo.appendChild(statValue);
+                    statInfo.appendChild(statLabel);
+                    
+                    statCard.appendChild(iconContainer);
+                    statCard.appendChild(statInfo);
+                    
+                    statsContainer.appendChild(statCard);
+                });
+                
+                headerContent.appendChild(welcomeText);
+                headerContent.appendChild(statsContainer);
+                
+                headerSection.appendChild(headerContent);
+                
+                const mainContent = document.createElement('div');
+                mainContent.className = 'max-w-6xl mx-auto px-6 py-8';
+                
+                const tabsContainer = document.createElement('div');
+                tabsContainer.className = 'border-b border-gray-200 mb-8';
+                
+                const tabs = document.createElement('div');
+                tabs.className = 'flex space-x-8';
+                
+                const tabItems = ['My Items', 'Swap Requests', 'Activity'];
+                
+                tabItems.forEach((tabName, index) => {
+                    const tab = document.createElement('button');
+                    tab.className = `py-4 px-1 text-center text-gray-600 hover:text-teal-700 font-medium ${index === 0 ? 'tab-active' : ''}`;
+                    tab.textContent = tabName;
+                    tab.addEventListener('click', (e) => {
+                        // Remove active class from all tabs
+                        tabs.querySelectorAll('button').forEach(t => t.classList.remove('tab-active'));
+                        // Add active class to clicked tab
+                        e.target.classList.add('tab-active');
+                        // Show corresponding content
+                        tabContents.querySelectorAll('.tab-content').forEach((content, i) => {
+                            content.style.display = i === index ? 'block' : 'none';
+                        });
+                    });
+                    tabs.appendChild(tab);
+                });
+                
+                tabsContainer.appendChild(tabs);
+                
+                const tabContents = document.createElement('div');
+                tabContents.className = 'mt-8';
+                
+                // My Items Tab Content
+                const myItemsContent = document.createElement('div');
+                myItemsContent.className = 'tab-content';
+                
+                const myItemsHeader = document.createElement('div');
+                myItemsHeader.className = 'flex justify-between items-center mb-6';
+                
+                const myItemsTitle = document.createElement('h2');
+                myItemsTitle.className = 'text-xl font-semibold text-gray-800';
+                myItemsTitle.textContent = 'My Listed Items';
+                
+                const addItemButton = document.createElement('button');
+                addItemButton.className = 'px-4 py-2 bg-teal-700 text-white rounded-md hover:bg-teal-800 flex items-center';
+                addItemButton.innerHTML = `<svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path></svg> Add New Item`;
+                addItemButton.addEventListener('click', () => navigateTo('add-item'));
+                
+                myItemsHeader.appendChild(myItemsTitle);
+                myItemsHeader.appendChild(addItemButton);
+                
+                const myItemsGrid = document.createElement('div');
+                myItemsGrid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6';
+                
+                // Get user's items
+                const userItems = appState.items.filter(item => 
+                    appState.currentUser.items.includes(item.id)
+                );
+                
+                if (userItems.length > 0) {
+                    userItems.forEach(item => {
+                        const itemCard = document.createElement('div');
+                        itemCard.className = 'card bg-white rounded-lg shadow-md overflow-hidden';
+                        
+                        const itemImage = document.createElement('div');
+                        itemImage.className = 'h-48 bg-gray-200 overflow-hidden';
+                        itemImage.innerHTML = svgImages[item.images[0]];
+                        
+                        const itemContent = document.createElement('div');
+                        itemContent.className = 'p-4';
+                        
+                        const itemTitle = document.createElement('h3');
+                        itemTitle.className = 'font-medium text-gray-800 mb-1';
+                        itemTitle.textContent = item.title;
+                        
+                        const itemMeta = document.createElement('div');
+                        itemMeta.className = 'flex flex-wrap gap-2 mb-3';
+                        
+                        const itemSize = document.createElement('span');
+                        itemSize.className = 'inline-block bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded';
+                        itemSize.textContent = `Size ${item.size}`;
+                        
+                        const itemCondition = document.createElement('span');
+                        itemCondition.className = 'inline-block bg-teal-100 text-teal-700 text-xs px-2 py-1 rounded';
+                        itemCondition.textContent = item.condition;
+                        
+                        const itemStatus = document.createElement('span');
+                        itemStatus.className = `inline-block text-xs px-2 py-1 rounded ${item.status === 'available' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`;
+                        itemStatus.textContent = item.status.charAt(0).toUpperCase() + item.status.slice(1);
+                        
+                        itemMeta.appendChild(itemSize);
+                        itemMeta.appendChild(itemCondition);
+                        itemMeta.appendChild(itemStatus);
+                        
+                        const viewButton = document.createElement('button');
+                        viewButton.className = 'w-full py-2 bg-teal-700 text-white rounded hover:bg-teal-800 transition-colors';
+                        viewButton.textContent = 'View Details';
+                        viewButton.addEventListener('click', () => navigateTo('item-detail', { itemId: item.id }));
+                        
+                        itemContent.appendChild(itemTitle);
+                        itemContent.appendChild(itemMeta);
+                        itemContent.appendChild(viewButton);
+                        
+                        itemCard.appendChild(itemImage);
+                        itemCard.appendChild(itemContent);
+                        
+                        myItemsGrid.appendChild(itemCard);
+                    });
+                } else {
+                    const emptyState = document.createElement('div');
+                    emptyState.className = 'text-center py-12 bg-gray-50 rounded-lg';
+                    
+                    const emptyIcon = document.createElement('div');
+                    emptyIcon.className = 'text-gray-400 mb-4';
+                    emptyIcon.innerHTML = `<svg class="w-16 h-16 mx-auto" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clip-rule="evenodd"></path></svg>`;
+                    
+                    const emptyText = document.createElement('h3');
+                    emptyText.className = 'text-gray-500 font-medium';
+                    emptyText.textContent = 'You haven\'t listed any items yet';
+                    
+                    const emptyButton = document.createElement('button');
+                    emptyButton.className = 'mt-4 px-4 py-2 bg-teal-700 text-white rounded-md hover:bg-teal-800';
+                    emptyButton.textContent = 'Add Your First Item';
+                    emptyButton.addEventListener('click', () => navigateTo('add-item'));
+                    
+                    emptyState.appendChild(emptyIcon);
+                    emptyState.appendChild(emptyText);
+                    emptyState.appendChild(emptyButton);
+                    
+                    myItemsGrid.appendChild(emptyState);
+                }
+                
+                myItemsContent.appendChild(myItemsHeader);
+                myItemsContent.appendChild(myItemsGrid);
+                
+                // Swap Requests Tab Content
+                const swapRequestsContent = document.createElement('div');
+                swapRequestsContent.className = 'tab-content hidden';
+                
+                const swapRequestsTitle = document.createElement('h2');
+                swapRequestsTitle.className = 'text-xl font-semibold text-gray-800 mb-6';
+                swapRequestsTitle.textContent = 'Swap Requests';
+                
+                const emptySwaps = document.createElement('div');
+                emptySwaps.className = 'text-center py-12 bg-gray-50 rounded-lg';
+                
+                const emptySwapsIcon = document.createElement('div');
+                emptySwapsIcon.className = 'text-gray-400 mb-4';
+                emptySwapsIcon.innerHTML = `<svg class="w-16 h-16 mx-auto" fill="currentColor" viewBox="0 0 20 20"><path d="M8 5a1 1 0 100 2h5.586l-1.293 1.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L13.586 5H8zM12 15a1 1 0 100-2H6.414l1.293-1.293a1 1 0 10-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L6.414 15H12z"></path></svg>`;
+                
+                const emptySwapsText = document.createElement('h3');
+                emptySwapsText.className = 'text-gray-500 font-medium';
+                emptySwapsText.textContent = 'No swap requests at the moment';
+                
+                const browseButton = document.createElement('button');
+                browseButton.className = 'mt-4 px-4 py-2 bg-teal-700 text-white rounded-md hover:bg-teal-800';
+                browseButton.textContent = 'Browse Items';
+                browseButton.addEventListener('click', () => navigateTo('browse'));
+                
+                emptySwaps.appendChild(emptySwapsIcon);
+                emptySwaps.appendChild(emptySwapsText);
+                emptySwaps.appendChild(browseButton);
+                
+                swapRequestsContent.appendChild(swapRequestsTitle);
+                swapRequestsContent.appendChild(emptySwaps);
+                
+                // Activity Tab Content
+                const activityContent = document.createElement('div');
+                activityContent.className = 'tab-content hidden';
+                
+                const activityTitle = document.createElement('h2');
+                activityTitle.className = 'text-xl font-semibold text-gray-800 mb-6';
+                activityTitle.textContent = 'Recent Activity';
+                
+                const activityList = document.createElement('div');
+                activityList.className = 'space-y-4';
+                
+                const activities = [
+                    {
+                        type: 'signup',
+                        message: 'You joined ThreadCycle',
+                        date: '2 days ago'
+                    },
+                    {
+                        type: 'points',
+                        message: 'Received 100 welcome points',
+                        date: '2 days ago'
+                    }
+                ];
+                
+                activities.forEach(activity => {
+                    const activityItem = document.createElement('div');
+                    activityItem.className = 'bg-white p-4 rounded-lg shadow-sm flex items-start';
+                    
+                    const activityIcon = document.createElement('div');
+                    activityIcon.className = 'mr-4 p-2 rounded-full bg-teal-100 text-teal-700';
+                    
+                    if (activity.type === 'signup') {
+                        activityIcon.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>`;
+                    } else if (activity.type === 'points') {
+                        activityIcon.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path></svg>`;
+                    }
+                    
+                    const activityContent = document.createElement('div');
+                    activityContent.className = 'flex-1';
+                    
+                    const activityMessage = document.createElement('p');
+                    activityMessage.className = 'text-gray-800';
+                    activityMessage.textContent = activity.message;
+                    
+                    const activityDate = document.createElement('p');
+                    activityDate.className = 'text-sm text-gray-500';
+                    activityDate.textContent = activity.date;
+                    
+                    activityContent.appendChild(activityMessage);
+                    activityContent.appendChild(activityDate);
+                    
+                    activityItem.appendChild(activityIcon);
+                    activityItem.appendChild(activityContent);
+                    
+                    activityList.appendChild(activityItem);
+                });
+                
+                activityContent.appendChild(activityTitle);
+                activityContent.appendChild(activityList);
+                
+                tabContents.appendChild(myItemsContent);
+                tabContents.appendChild(swapRequestsContent);
+                tabContents.appendChild(activityContent);
+                
+                mainContent.appendChild(tabsContainer);
+                mainContent.appendChild(tabContents);
+                
+                dashboard.appendChild(headerSection);
+                dashboard.appendChild(mainContent);
+                
+                return dashboard;
+            }
+
+            function renderBrowsePage() {
+                const browsePage = document.createElement('div');
+                browsePage.className = 'min-h-screen bg-gray-50 pb-12';
+                
+                const headerSection = document.createElement('div');
+                headerSection.className = 'gradient-bg text-white py-12 px-6';
+                
+                const headerContent = document.createElement('div');
+                headerContent.className = 'max-w-6xl mx-auto';
+                
+                const pageTitle = document.createElement('h1');
+                pageTitle.className = 'text-3xl font-bold mb-4';
+                pageTitle.textContent = 'Browse Items';
+                
+                const searchContainer = document.createElement('div');
+                searchContainer.className = 'max-w-2xl';
+                
+                const searchForm = document.createElement('form');
+                searchForm.className = 'flex';
+                searchForm.addEventListener('submit', (e) => e.preventDefault());
+                
+                const searchInput = document.createElement('input');
+                searchInput.className = 'flex-1 px-4 py-3 rounded-l-md border-0 focus:ring-2 focus:ring-white focus:ring-opacity-50';
+                searchInput.type = 'text';
+                searchInput.placeholder = 'Search by keyword, category, size...';
+                
+                const searchButton = document.createElement('button');
+                searchButton.className = 'px-6 py-3 bg-teal-600 text-white rounded-r-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50';
+                searchButton.type = 'submit';
+                searchButton.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"></path></svg>`;
+                
+                searchForm.appendChild(searchInput);
+                searchForm.appendChild(searchButton);
+                
+                searchContainer.appendChild(searchForm);
+                
+                headerContent.appendChild(pageTitle);
+                headerContent.appendChild(searchContainer);
+                
+                headerSection.appendChild(headerContent);
+                
+                const mainContent = document.createElement('div');
+                mainContent.className = 'max-w-6xl mx-auto px-6 py-8';
+                
+                const filtersSection = document.createElement('div');
+                filtersSection.className = 'mb-8 bg-white p-4 rounded-lg shadow-sm';
+                
+                const filtersTitle = document.createElement('h3');
+                filtersTitle.className = 'text-lg font-medium text-gray-800 mb-4';
+                filtersTitle.textContent = 'Filters';
+                
+                const filtersGrid = document.createElement('div');
+                filtersGrid.className = 'grid grid-cols-1 md:grid-cols-4 gap-4';
+                
+                const categoryFilter = document.createElement('div');
+                
+                const categoryLabel = document.createElement('label');
+                categoryLabel.className = 'block text-sm font-medium text-gray-700 mb-1';
+                categoryLabel.textContent = 'Category';
+                categoryLabel.setAttribute('for', 'category');
+                
+                const categorySelect = document.createElement('select');
+                categorySelect.className = 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500';
+                categorySelect.id = 'category';
+                
+                const categoryOptions = ['All Categories', 'Tops', 'Bottoms', 'Dresses', 'Outerwear', 'Footwear', 'Accessories'];
+                
+                categoryOptions.forEach(option => {
+                    const optionElement = document.createElement('option');
+                    optionElement.value = option === 'All Categories' ? '' : option;
+                    optionElement.textContent = option;
+                    categorySelect.appendChild(optionElement);
+                });
+                
+                categoryFilter.appendChild(categoryLabel);
+                categoryFilter.appendChild(categorySelect);
+                
+                const sizeFilter = document.createElement('div');
+                
+                const sizeLabel = document.createElement('label');
+                sizeLabel.className = 'block text-sm font-medium text-gray-700 mb-1';
+                sizeLabel.textContent = 'Size';
+                sizeLabel.setAttribute('for', 'size');
+                
+                const sizeSelect = document.createElement('select');
+                sizeSelect.className = 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500';
+                sizeSelect.id = 'size';
+                
+                const sizeOptions = ['All Sizes', 'XS', 'S', 'M', 'L', 'XL', 'XXL'];
+                
+                sizeOptions.forEach(option => {
+                    const optionElement = document.createElement('option');
+                    optionElement.value = option === 'All Sizes' ? '' : option;
+                    optionElement.textContent = option;
+                    sizeSelect.appendChild(optionElement);
+                });
+                
+                sizeFilter.appendChild(sizeLabel);
+                sizeFilter.appendChild(sizeSelect);
+                
+                const conditionFilter = document.createElement('div');
+                
+                const conditionLabel = document.createElement('label');
+                conditionLabel.className = 'block text-sm font-medium text-gray-700 mb-1';
+                conditionLabel.textContent = 'Condition';
+                conditionLabel.setAttribute('for', 'condition');
+                
+                const conditionSelect = document.createElement('select');
+                conditionSelect.className = 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500';
+                conditionSelect.id = 'condition';
+                
+                const conditionOptions = ['Any Condition', 'Like New', 'Excellent', 'Very Good', 'Good', 'Fair'];
+                
+                conditionOptions.forEach(option => {
+                    const optionElement = document.createElement('option');
+                    optionElement.value = option === 'Any Condition' ? '' : option;
+                    optionElement.textContent = option;
+                    conditionSelect.appendChild(optionElement);
+                });
+                
+                conditionFilter.appendChild(conditionLabel);
+                conditionFilter.appendChild(conditionSelect);
+                
+                const sortFilter = document.createElement('div');
+                
+                const sortLabel = document.createElement('label');
+                sortLabel.className = 'block text-sm font-medium text-gray-700 mb-1';
+                sortLabel.textContent = 'Sort By';
+                sortLabel.setAttribute('for', 'sort');
+                
+                const sortSelect = document.createElement('select');
+                sortSelect.className = 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500';
+                sortSelect.id = 'sort';
+                
+                const sortOptions = ['Newest First', 'Oldest First', 'Condition: Best to Worst', 'Condition: Worst to Best'];
+                
+                sortOptions.forEach(option => {
+                    const optionElement = document.createElement('option');
+                    optionElement.value = option.toLowerCase().replace(/\s+/g, '_');
+                    optionElement.textContent = option;
+                    sortSelect.appendChild(optionElement);
+                });
+                
+                sortFilter.appendChild(sortLabel);
+                sortFilter.appendChild(sortSelect);
+                
+                filtersGrid.appendChild(categoryFilter);
+                filtersGrid.appendChild(sizeFilter);
+                filtersGrid.appendChild(conditionFilter);
+                filtersGrid.appendChild(sortFilter);
+                
+                filtersSection.appendChild(filtersTitle);
+                filtersSection.appendChild(filtersGrid);
+                
+                const resultsSection = document.createElement('div');
+                
+                const resultsHeader = document.createElement('div');
+                resultsHeader.className = 'flex justify-between items-center mb-6';
+                
+                const resultsCount = document.createElement('h2');
+                resultsCount.className = 'text-xl font-semibold text-gray-800';
+                resultsCount.textContent = `${appState.items.length} Items Available`;
+                
+                const viewToggle = document.createElement('div');
+                viewToggle.className = 'flex space-x-2';
+                
+                const gridViewBtn = document.createElement('button');
+                gridViewBtn.className = 'p-2 bg-teal-700 text-white rounded';
+                gridViewBtn.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>`;
+                
+                const listViewBtn = document.createElement('button');
+                listViewBtn.className = 'p-2 bg-gray-200 text-gray-700 rounded';
+                listViewBtn.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"></path></svg>`;
+                
+                viewToggle.appendChild(gridViewBtn);
+                viewToggle.appendChild(listViewBtn);
+                
+                resultsHeader.appendChild(resultsCount);
+                resultsHeader.appendChild(viewToggle);
+                
+                const itemsGrid = document.createElement('div');
+                itemsGrid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6';
+                
+                appState.items.forEach(item => {
+                    const itemCard = document.createElement('div');
+                    itemCard.className = 'card bg-white rounded-lg shadow-md overflow-hidden';
+                    
+                    const itemImage = document.createElement('div');
+                    itemImage.className = 'h-48 bg-gray-200 overflow-hidden';
+                    itemImage.innerHTML = svgImages[item.images[0]];
+                    
+                    const itemContent = document.createElement('div');
+                    itemContent.className = 'p-4';
+                    
+                    const itemTitle = document.createElement('h3');
+                    itemTitle.className = 'font-medium text-gray-800 mb-1';
+                    itemTitle.textContent = item.title;
+                    
+                    const itemMeta = document.createElement('div');
+                    itemMeta.className = 'flex flex-wrap gap-2 mb-3';
+                    
+                    const itemSize = document.createElement('span');
+                    itemSize.className = 'inline-block bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded';
+                    itemSize.textContent = `Size ${item.size}`;
+                    
+                    const itemCondition = document.createElement('span');
+                    itemCondition.className = 'inline-block bg-teal-100 text-teal-700 text-xs px-2 py-1 rounded';
+                    itemCondition.textContent = item.condition;
+                    
+                    itemMeta.appendChild(itemSize);
+                    itemMeta.appendChild(itemCondition);
+                    
+                    const uploaderInfo = document.createElement('div');
+                    uploaderInfo.className = 'flex items-center text-sm text-gray-500 mb-3';
+                    
+                    const uploaderAvatar = document.createElement('div');
+                    uploaderAvatar.className = 'w-6 h-6 rounded-full overflow-hidden mr-2';
+                    uploaderAvatar.innerHTML = svgImages.userAvatar;
+                    
+                    const uploaderName = document.createElement('span');
+                    uploaderName.textContent = item.uploader.name;
+                    
+                    uploaderInfo.appendChild(uploaderAvatar);
+                    uploaderInfo.appendChild(uploaderName);
+                    
+                    const viewButton = document.createElement('button');
+                    viewButton.className = 'w-full py-2 bg-teal-700 text-white rounded hover:bg-teal-800 transition-colors';
+                    viewButton.textContent = 'View Details';
+                    viewButton.addEventListener('click', () => navigateTo('item-detail', { itemId: item.id }));
+                    
+                    itemContent.appendChild(itemTitle);
+                    itemContent.appendChild(itemMeta);
+                    itemContent.appendChild(uploaderInfo);
+                    itemContent.appendChild(viewButton);
+                    
+                    itemCard.appendChild(itemImage);
+                    itemCard.appendChild(itemContent);
+                    
+                    itemsGrid.appendChild(itemCard);
+                });
+                
+                resultsSection.appendChild(resultsHeader);
+                resultsSection.appendChild(itemsGrid);
+                
+                mainContent.appendChild(filtersSection);
+                mainContent.appendChild(resultsSection);
+                
+                browsePage.appendChild(headerSection);
+                browsePage.appendChild(mainContent);
+                
+                return browsePage;
+            }
+
+            function renderItemDetailPage() {
+                if (!appState.selectedItem) {
+                    navigateTo('browse');
+                    return document.createElement('div');
+                }
+                
+                const item = appState.selectedItem;
+                
+                const detailPage = document.createElement('div');
+                detailPage.className = 'min-h-screen bg-gray-50 pb-12';
+                
+                const mainContent = document.createElement('div');
+                mainContent.className = 'max-w-6xl mx-auto px-6 py-8';
+                
+                const breadcrumbs = document.createElement('div');
+                breadcrumbs.className = 'flex items-center text-sm text-gray-500 mb-6';
+                
+                const browseLink = document.createElement('a');
+                browseLink.className = 'hover:text-teal-700 cursor-pointer';
+                browseLink.textContent = 'Browse';
+                browseLink.addEventListener('click', () => navigateTo('browse'));
+                
+                const separator = document.createElement('span');
+                separator.className = 'mx-2';
+                separator.textContent = '/';
+                
+                const categoryLink = document.createElement('a');
+                categoryLink.className = 'hover:text-teal-700 cursor-pointer';
+                categoryLink.textContent = item.category;
+                
+                const separator2 = document.createElement('span');
+                separator2.className = 'mx-2';
+                separator2.textContent = '/';
+                
+                const itemName = document.createElement('span');
+                itemName.className = 'text-gray-700';
+                itemName.textContent = item.title;
+                
+                breadcrumbs.appendChild(browseLink);
+                breadcrumbs.appendChild(separator);
+                breadcrumbs.appendChild(categoryLink);
+                breadcrumbs.appendChild(separator2);
+                breadcrumbs.appendChild(itemName);
+                
+                const itemContainer = document.createElement('div');
+                itemContainer.className = 'bg-white rounded-lg shadow-md overflow-hidden';
+                
+                const itemGrid = document.createElement('div');
+                itemGrid.className = 'grid grid-cols-1 md:grid-cols-2 gap-8 p-6';
+                
+                const imageSection = document.createElement('div');
+                
+                const mainImage = document.createElement('div');
+                mainImage.className = 'bg-gray-100 rounded-lg overflow-hidden h-96 mb-4';
+                mainImage.innerHTML = svgImages[item.images[0]];
+                
+                const thumbnailsContainer = document.createElement('div');
+                thumbnailsContainer.className = 'grid grid-cols-4 gap-2';
+                
+                item.images.forEach((image, index) => {
+                    const thumbnail = document.createElement('div');
+                    thumbnail.className = `bg-gray-100 rounded overflow-hidden h-20 cursor-pointer ${index === 0 ? 'ring-2 ring-teal-500' : ''}`;
+                    thumbnail.innerHTML = svgImages[image];
+                    thumbnail.addEventListener('click', () => {
+                        mainImage.innerHTML = svgImages[image];
+                        thumbnailsContainer.querySelectorAll('div').forEach(thumb => thumb.classList.remove('ring-2', 'ring-teal-500'));
+                        thumbnail.classList.add('ring-2', 'ring-teal-500');
+                    });
+                    thumbnailsContainer.appendChild(thumbnail);
+                });
+                
+                imageSection.appendChild(mainImage);
+                imageSection.appendChild(thumbnailsContainer);
+                
+                const detailsSection = document.createElement('div');
+                
+                const itemTitle = document.createElement('h1');
+                itemTitle.className = 'text-2xl font-bold text-gray-800 mb-2';
+                itemTitle.textContent = item.title;
+                
+                const itemCondition = document.createElement('div');
+                itemCondition.className = 'mb-4';
+                
+                const conditionBadge = document.createElement('span');
+                conditionBadge.className = 'inline-block bg-teal-100 text-teal-700 text-sm px-3 py-1 rounded-full';
+                conditionBadge.textContent = item.condition;
+                
+                itemCondition.appendChild(conditionBadge);
+                
+                const itemDescription = document.createElement('div');
+                itemDescription.className = 'mb-6';
+                
+                const descriptionTitle = document.createElement('h3');
+                descriptionTitle.className = 'text-lg font-medium text-gray-800 mb-2';
+                descriptionTitle.textContent = 'Description';
+                
+                const descriptionText = document.createElement('p');
+                descriptionText.className = 'text-gray-600';
+                descriptionText.textContent = item.description;
+                
+                itemDescription.appendChild(descriptionTitle);
+                itemDescription.appendChild(descriptionText);
+                
+                const itemDetails = document.createElement('div');
+                itemDetails.className = 'mb-6';
+                
+                const detailsTitle = document.createElement('h3');
+                detailsTitle.className = 'text-lg font-medium text-gray-800 mb-2';
+                detailsTitle.textContent = 'Item Details';
+                
+                const detailsList = document.createElement('div');
+                detailsList.className = 'grid grid-cols-2 gap-2 text-sm';
+                
+                const details = [
+                    { label: 'Category', value: item.category },
+                    { label: 'Type', value: item.type },
+                    { label: 'Size', value: item.size },
+                    { label: 'Condition', value: item.condition }
+                ];
+                
+                details.forEach(detail => {
+                    const detailItem = document.createElement('div');
+                    detailItem.className = 'flex';
+                    
+                    const detailLabel = document.createElement('span');
+                    detailLabel.className = 'text-gray-500 mr-2';
+                    detailLabel.textContent = `${detail.label}:`;
+                    
+                    const detailValue = document.createElement('span');
+                    detailValue.className = 'text-gray-800 font-medium';
+                    detailValue.textContent = detail.value;
+                    
+                    detailItem.appendChild(detailLabel);
+                    detailItem.appendChild(detailValue);
+                    
+                    detailsList.appendChild(detailItem);
+                });
+                
+                itemDetails.appendChild(detailsTitle);
+                itemDetails.appendChild(detailsList);
+                
+                const tagsSection = document.createElement('div');
+                tagsSection.className = 'mb-6';
+                
+                const tagsTitle = document.createElement('h3');
+                tagsTitle.className = 'text-lg font-medium text-gray-800 mb-2';
+                tagsTitle.textContent = 'Tags';
+                
+                const tagsList = document.createElement('div');
+                tagsList.className = 'flex flex-wrap gap-2';
+                
+                item.tags.forEach(tag => {
+                    const tagBadge = document.createElement('span');
+                    tagBadge.className = 'bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full';
+                    tagBadge.textContent = tag;
+                    tagsList.appendChild(tagBadge);
+                });
+                
+                tagsSection.appendChild(tagsTitle);
+                tagsSection.appendChild(tagsList);
+                
+                const uploaderSection = document.createElement('div');
+                uploaderSection.className = 'mb-8 p-4 bg-gray-50 rounded-lg';
+                
+                const uploaderTitle = document.createElement('h3');
+                uploaderTitle.className = 'text-lg font-medium text-gray-800 mb-3';
+                uploaderTitle.textContent = 'Listed By';
+                
+                const uploaderInfo = document.createElement('div');
+                uploaderInfo.className = 'flex items-center';
+                
+                const uploaderAvatar = document.createElement('div');
+                uploaderAvatar.className = 'w-10 h-10 rounded-full overflow-hidden mr-3';
+                uploaderAvatar.innerHTML = svgImages.userAvatar;
+                
+                const uploaderDetails = document.createElement('div');
+                
+                const uploaderName = document.createElement('div');
+                uploaderName.className = 'font-medium text-gray-800';
+                uploaderName.textContent = item.uploader.name;
+                
+                const uploaderRating = document.createElement('div');
+                uploaderRating.className = 'flex items-center text-sm text-gray-600';
+                uploaderRating.innerHTML = `
+                    <svg class="w-4 h-4 text-yellow-400 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24```
