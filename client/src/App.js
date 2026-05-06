@@ -6,7 +6,7 @@ function App() {
 
   // TEXT ANALYSIS
   const analyzeCode = async () => {
-    const res = await fetch("http://localhost:7000/analyze", {
+    const res = await fetch("https://sanchit-project-debugging.onrender.com/analyze", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -25,7 +25,7 @@ function App() {
     const formData = new FormData();
     formData.append("file", file);
 
-    const res = await fetch("http://localhost:7000/upload", {
+    const res = await fetch("https://sanchit-project-debugging.onrender.com/upload", {
       method: "POST",
       body: formData
     });
